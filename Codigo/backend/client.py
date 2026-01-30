@@ -9,7 +9,7 @@ import time
 API_URL = "http://localhost:8000/input/voice"
 USER_ID = "98181061-0369-4267-9a9a-72f480744a2b"
 SAMPLE_RATE = 44100
-DURATION = 5  # Segundos de grabación
+DURATION = 10  # Segundos de grabación
 
 def record_audio(filename="temp_input.wav"):
     print(f"\n🎤 Grabando por {DURATION} segundos... ¡HABLA AHORA!")
