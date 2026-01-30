@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  void-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: void-backend
+    ports:
+      - "8000:8000"
+    environment:
+      # Supabase Configuration
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_KEY=${SUPABASE_KEY}
+
+      # API Keys
+      - DEEPGRAM_API_KEY=${DEEPGRAM_API_KEY}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+
+      # Optional: User ID for testing
+      - USER_ID=${USER_ID}
+
+      # API Configuration
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - CORS_ORIGINS=*
+    volumes:
+      # Mount source code for development (optional - comment out for production)
+      - ./src:/app/src
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - void-network
+
+networks:
+  void-network:
+    driver: bridge

@@ -1,0 +1,76 @@
+{
+  "analyze.predict": {
+    "traces": [],
+    "train": [],
+    "demos": [],
+    "signature": {
+      "instructions": "Signature para análisis unificado de input de voz.\nReemplaza múltiples llamadas LLM con una sola estructura optimizada.\n\n🆕 Ahora incluye soporte para ejecución autónoma de herramientas.",
+      "fields": [
+        {
+          "prefix": "Raw Text:",
+          "description": "Texto transcrito del audio del usuario"
+        },
+        {
+          "prefix": "Context:",
+          "description": "Fecha actual, hora y lista de herramientas disponibles"
+        },
+        {
+          "prefix": "Reasoning: Let's think step by step in order to",
+          "description": "${reasoning}"
+        },
+        {
+          "prefix": "Type:",
+          "description": "Tipo de input: 'ACTION' o 'MEMORY'"
+        },
+        {
+          "prefix": "Category:",
+          "description": "Categoría específica: CALENDAR, TODO, REMINDER, FACT, IDEA, etc."
+        },
+        {
+          "prefix": "Refined Text:",
+          "description": "Texto limpio sin ruido, en 3ra persona"
+        },
+        {
+          "prefix": "Title:",
+          "description": "Título corto del evento (solo para CALENDAR, máx 5 palabras)"
+        },
+        {
+          "prefix": "Date:",
+          "description": "Fecha extraída si se menciona"
+        },
+        {
+          "prefix": "Time:",
+          "description": "Hora extraída si se menciona"
+        },
+        {
+          "prefix": "Location:",
+          "description": "Ubicación física si se menciona"
+        },
+        {
+          "prefix": "Reminder Minutes:",
+          "description": "Minutos antes para recordatorio (número entero)"
+        },
+        {
+          "prefix": "Confidence:",
+          "description": "Confianza de la clasificación (0.0-1.0)"
+        },
+        {
+          "prefix": "Tool Name:",
+          "description": "SIEMPRE que la category sea 'CALENDAR', este campo DEBE SER 'calendar_add'. Si no, None."
+        },
+        {
+          "prefix": "Tool Args:",
+          "description": "Diccionario con los argumentos exactos para la herramienta (ej: {'summary': 'Dentista', 'start_iso': '2026-01-30T17:00:00'})."
+        }
+      ]
+    },
+    "lm": null
+  },
+  "metadata": {
+    "dependency_versions": {
+      "python": "3.13",
+      "dspy": "3.1.2",
+      "cloudpickle": "3.1"
+    }
+  }
+}

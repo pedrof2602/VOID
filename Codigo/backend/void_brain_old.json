@@ -1,0 +1,133 @@
+{
+  "analyze.predict": {
+    "traces": [],
+    "train": [],
+    "demos": [
+      {
+        "augmented": true,
+        "raw_text": "Agendar reunión con Pedro... no, espera, mejor con Pablo el lunes",
+        "reasoning": "The user initially wanted to schedule a meeting with Pedro but then corrected themselves to schedule it with Pablo on Monday. The final instruction is to schedule a meeting with Pablo on Monday.",
+        "type": "ACTION",
+        "category": "CALENDAR",
+        "refined_text": "Agendar reunión con Pablo el lunes.",
+        "title": "Reunión con Pablo",
+        "date": "el lunes",
+        "time": "",
+        "location": "",
+        "reminder_minutes": "0",
+        "confidence": "0.98"
+      },
+      {
+        "augmented": true,
+        "raw_text": "Tengo muchas ganas de ir a ver la nueva de Batman",
+        "reasoning": "The user expresses a desire to see a movie. This is a personal thought or intention, not an action to be performed by the system, nor a fact to be stored. It's a statement of personal interest.",
+        "type": "MEMORY",
+        "category": "IDEA",
+        "refined_text": "El usuario tiene ganas de ir a ver la nueva película de Batman.",
+        "title": "",
+        "date": "",
+        "time": "",
+        "location": "",
+        "reminder_minutes": "0",
+        "confidence": "0.70"
+      },
+      {
+        "augmented": true,
+        "raw_text": "Avísame en 20 minutos que saque la pizza del horno",
+        "reasoning": "The user wants to be reminded to take the pizza out of the oven in 20 minutes. This is a clear action that requires a reminder.",
+        "type": "ACTION",
+        "category": "REMINDER",
+        "refined_text": "El usuario solicita un recordatorio para sacar la pizza del horno en 20 minutos.",
+        "title": "Sacar pizza del horno",
+        "date": "",
+        "time": "",
+        "location": "",
+        "reminder_minutes": "20",
+        "confidence": "0.98"
+      },
+      {
+        "augmented": true,
+        "raw_text": "La fórmula de Green relaciona una integral de línea con una doble",
+        "reasoning": "The user is stating a fact about a mathematical formula. The type is MEMORY, the category is FACT, and the refined text captures the essence of the statement. No specific title, date, time, location, or reminder minutes are applicable. The confidence is high as the statement is clear.",
+        "type": "MEMORY",
+        "category": "FACT",
+        "refined_text": "La fórmula de Green relaciona una integral de línea con una doble integral.",
+        "title": "",
+        "date": "",
+        "time": "",
+        "location": "",
+        "reminder_minutes": "0",
+        "confidence": "0.95"
+      },
+      {
+        "raw_text": "Olvida lo que dije antes, no es importante",
+        "type": "MEMORY",
+        "category": "FACT",
+        "refined_text": "El usuario indica descartar la instrucción previa.",
+        "title": "",
+        "date": "",
+        "time": "",
+        "location": "",
+        "reminder_minutes": "0",
+        "confidence": "0.10"
+      }
+    ],
+    "signature": {
+      "instructions": "Signature para análisis unificado de input de voz.\nReemplaza múltiples llamadas LLM con una sola estructura optimizada.",
+      "fields": [
+        {
+          "prefix": "Raw Text:",
+          "description": "Texto transcrito del audio del usuario"
+        },
+        {
+          "prefix": "Reasoning: Let's think step by step in order to",
+          "description": "${reasoning}"
+        },
+        {
+          "prefix": "Type:",
+          "description": "Tipo de input: 'ACTION' o 'MEMORY'"
+        },
+        {
+          "prefix": "Category:",
+          "description": "Categoría específica: CALENDAR, TODO, REMINDER, FACT, IDEA, etc."
+        },
+        {
+          "prefix": "Refined Text:",
+          "description": "Texto limpio sin ruido, en 3ra persona"
+        },
+        {
+          "prefix": "Title:",
+          "description": "Título corto del evento (solo para CALENDAR, máx 5 palabras)"
+        },
+        {
+          "prefix": "Date:",
+          "description": "Fecha extraída si se menciona"
+        },
+        {
+          "prefix": "Time:",
+          "description": "Hora extraída si se menciona"
+        },
+        {
+          "prefix": "Location:",
+          "description": "Ubicación física si se menciona"
+        },
+        {
+          "prefix": "Reminder Minutes:",
+          "description": "Minutos antes para recordatorio (número entero)"
+        },
+        {
+          "prefix": "Confidence:",
+          "description": "Confianza de la clasificación (0.0-1.0)"
+        }
+      ]
+    },
+    "lm": null
+  },
+  "metadata": {
+    "dependency_versions": {
+      "python": "3.13",
+      "dspy": "3.1.2",
+      "cloudpickle": "3.1"
+    }
+  }
+}

@@ -1,0 +1,16 @@
+supabase
+python-dotenv
+sounddevice
+scipy
+numpy
+google-generativeai
+deepgram-sdk
+fastapi
+uvicorn[standard]
+python-multipart
+dspy-ai
+httpx
+litellm
+google-api-python-client
+google-auth-httplib2
+google-auth-oauthlib
