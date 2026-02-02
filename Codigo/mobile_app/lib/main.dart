@@ -5,8 +5,10 @@ import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:record/record.dart';
 import 'package:vibration/vibration.dart';
+import 'package:http_parser/http_parser.dart';
 
-const String BACKEND_URL = 'https://isis-ungraspable-beatris.ngrok-free.dev';
+// ⚠️ REVISA QUE ESTA SEA TU URL ACTUAL DE NGROK
+const String backendUrl = 'https://isis-ungraspable-beatris.ngrok-free.dev';
 
 void main() {
   runApp(const VoidApp());
@@ -49,7 +51,7 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void initState() {
     super.initState();
-    // Animación de "Respiración" lenta
+    // Animación de respiración
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 4),
@@ -64,81 +66,95 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Future<void> _initPermissions() async {
-    await Permission.microphone.request();
+    // Verificación de seguridad para evitar errores en compilación cruzada
+    if (!Platform.isLinux && !Platform.isWindows && !Platform.isMacOS) {
+      await Permission.microphone.request();
+    }
   }
 
-  // 👇 INICIAR GRABACIÓN
   Future<void> _startRecording() async {
     try {
       if (await _audioRecorder.hasPermission()) {
         final directory = await getTemporaryDirectory();
         final path = '${directory.path}/void_temp.m4a';
 
-        // Haptic: Vibración corta
         if (await Vibration.hasVibrator() ?? false) {
           Vibration.vibrate(duration: 50);
         }
 
         await _audioRecorder.start(const RecordConfig(), path: path);
         setState(() => _isRecording = true);
-        print("🎙️ Grabando...");
+        debugPrint("🎙️ Grabando...");
       }
     } catch (e) {
-      print("❌ Error al grabar: $e");
+      debugPrint("❌ Error al grabar: $e");
     }
   }
 
-  // 👇 DETENER Y ENVIAR
   Future<void> _stopAndSend() async {
     try {
       final path = await _audioRecorder.stop();
       setState(() {
         _isRecording = false;
-        _isProcessing = true; // Modo "Pensando"
+        _isProcessing = true; // Modo "Thinking"
       });
 
-      // Haptic: Doble vibración (Confirmación de envío)
       if (await Vibration.hasVibrator() ?? false) {
         Vibration.vibrate(pattern: [0, 50, 50, 50]);
       }
 
       if (path != null) {
-        print("📤 Enviando a VOID...");
+        debugPrint("📤 Enviando a VOID...");
         await _uploadAudio(path);
       }
     } catch (e) {
-      print("❌ Error al detener: $e");
+      debugPrint("❌ Error al detener: $e");
       setState(() => _isProcessing = false);
     }
   }
 
-  // 👇 SUBIDA AL BACKEND
   Future<void> _uploadAudio(String filePath) async {
-    // Si olvidaste poner la URL, avisamos en consola
-    if (BACKEND_URL.contains('AQUÍ_VA')) {
-      print("⚠️ ERROR: No pusiste la URL de Ngrok en main.dart");
+    // Validación rápida
+    if (!backendUrl.contains('http')) {
+      debugPrint("⚠️ ERROR: URL de Ngrok inválida");
       setState(() => _isProcessing = false);
       return;
     }
 
     try {
-      var uri = Uri.parse('$BACKEND_URL/input/voice');
+      var uri = Uri.parse('$backendUrl/input/voice');
       var request = http.MultipartRequest('POST', uri);
-      request.files.add(await http.MultipartFile.fromPath('file', filePath));
+
+      // Definimos explícitamente el tipo de contenido (MIME Type)
+      var audioFile = await http.MultipartFile.fromPath(
+        'file',
+        filePath,
+        contentType: MediaType('audio', 'm4a'),
+      );
+
+      request.files.add(audioFile);
+
+      request.fields['user_id'] = '98181061-0369-4267-9a9a-72f480744a2b';
+
+      debugPrint("📤 Enviando archivo de ${await audioFile.length} bytes...");
 
       var response = await request.send();
+      var responseBody = await response.stream
+          .bytesToString(); // Leemos la respuesta
 
       if (response.statusCode == 200) {
-        print("✅ ÉXITO: VOID recibió la orden.");
-        // Haptic: Vibración larga de éxito
+        debugPrint("✅ ÉXITO: VOID respondió: $responseBody");
         if (await Vibration.hasVibrator() ?? false) {
           Vibration.vibrate(duration: 200);
         }
       } else {
-        print("⚠️ Error del servidor: ${response.statusCode}");
+        // Ahora veremos exactamente qué le molestó al servidor si falla
+        debugPrint(
+          "⚠️ Error del servidor (${response.statusCode}): $responseBody",
+        );
       }
     } catch (e) {
-      print("❌ Error de conexión: $e");
+      debugPrint("❌ Error de conexión: $e");
     } finally {
       setState(() => _isProcessing = false);
     }
@@ -153,33 +169,28 @@ class _HomeScreenState extends State<HomeScreen>
 
   @override
   Widget build(BuildContext context) {
-    // Definimos colores según el estado
-    Color ringColor = Colors.white.withOpacity(0.05); // Reposo (Casi invisible)
-    Color glowColor = const Color(
-      0xFF00F0FF,
-    ).withOpacity(0.05); // Azul Cyan sutil
+    // 🛡️ MODO SEGURO: Usamos withOpacity para garantizar compatibilidad con tu versión
+    // Si te sale tachado en el editor, IGNÓRALO, funcionará igual.
+    Color ringColor = Colors.white.withOpacity(0.05);
+    Color glowColor = const Color(0xFF00F0FF).withOpacity(0.05);
 
     if (_isRecording) {
-      ringColor = const Color(0xFFFF4444).withOpacity(0.8); // Rojo Grabando
+      ringColor = const Color(0xFFFF4444).withOpacity(0.8);
       glowColor = const Color(0xFFFF4444).withOpacity(0.3);
     } else if (_isProcessing) {
-      ringColor = const Color(0xFF00F0FF).withOpacity(0.8); // Azul Procesando
+      ringColor = const Color(0xFF00F0FF).withOpacity(0.8);
       glowColor = const Color(0xFF00F0FF).withOpacity(0.3);
     }
 
     return Scaffold(
-      // GestureDetector cubre TODA la pantalla
       body: GestureDetector(
-        behavior:
-            HitTestBehavior.opaque, // Importante para detectar toques en vacío
+        behavior: HitTestBehavior.opaque,
         onLongPressStart: (_) => _startRecording(),
         onLongPressEnd: (_) => _stopAndSend(),
-
         child: Center(
           child: AnimatedBuilder(
             animation: _controller,
             builder: (context, child) {
-              // Si está procesando, dejamos el tamaño fijo, si no, respira
               double scale = _isProcessing ? 1.0 : _scaleAnimation.value;
 
               return Transform.scale(
