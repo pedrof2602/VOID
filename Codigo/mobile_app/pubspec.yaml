@@ -41,6 +41,21 @@ dependencies:
   # URL launcher for opening external apps (maps, phone, browser)
   url_launcher: ^6.3.1
 
+  # Audio recording and playback
+  http: ^1.2.0
+
+  # File system operations
+  path_provider: ^2.1.2
+
+  # Permission management
+  permission_handler: ^11.3.0
+
+  # Audio recording
+  record: ^5.1.0
+  
+  # Vibration feedback
+  vibration: ^1.9.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -45,5 +45,9 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSMicrophoneUsageDescription</key>
+    <string>VOID necesita acceso al micrófono para escuchar tus comandos.</string>
+    <key>NSSpeechRecognitionUsageDescription</key>
+    <string>VOID necesita procesar tu voz para transcribir tus órdenes.</string>
 </dict>
 </plist>
