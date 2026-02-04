@@ -1,9 +1,12 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../core/constants.dart';
 import '../services/api_service.dart';
 import '../services/feedback_service.dart';
 import '../services/notification_service.dart';
 import '../services/recorder_service.dart';
+import 'widgets/status_hud.dart';
+import 'widgets/action_log.dart';
 
 /// 🏠 Pantalla Principal de VOID
 ///
@@ -37,6 +40,12 @@ class _HomeScreenState extends State<HomeScreen>
   bool _isRecording = false;
   bool _isProcessing = false;
 
+  // Estado de HUD
+  //todo: implementar HUD dinamico segun conexion
+  final List<String> _actionLogs = [];
+  bool _isConnected = true;
+  String _latency = "12ms";
+
   @override
   void initState() {
     super.initState();
@@ -62,6 +71,37 @@ class _HomeScreenState extends State<HomeScreen>
     await _feedbackService.initialize();
     await _recorderService.initialize();
     await _notificationService.requestPermissions();
+
+    // Log inicial
+    _addLog("System initialized");
+  }
+
+  // ————————————————————————————————————————————————
+  // 📝 GESTIÓN DE LOGS
+  // ————————————————————————————————————————————————
+
+  /// Agrega un mensaje al log de acciones
+  ///
+  /// - Limita a 3 mensajes máximo
+  /// - Auto-elimina el mensaje después de 5 segundos
+  void _addLog(String message) {
+    setState(() {
+      _actionLogs.add(message);
+
+      // Limitar a 3 mensajes
+      if (_actionLogs.length > 3) {
+        _actionLogs.removeAt(0);
+      }
+    });
+
+    // Auto-eliminar después de 5 segundos
+    Timer(const Duration(seconds: 5), () {
+      if (mounted && _actionLogs.contains(message)) {
+        setState(() {
+          _actionLogs.remove(message);
+        });
+      }
+    });
   }
 
   // ————————————————————————————————————————————————
@@ -71,6 +111,8 @@ class _HomeScreenState extends State<HomeScreen>
   /// Inicia la grabación de audio
   Future<void> _startRecording() async {
     try {
+      _addLog("🎙️ Recording audio...");
+
       final started = await _recorderService.startRecording();
 
       if (started) {
@@ -79,6 +121,7 @@ class _HomeScreenState extends State<HomeScreen>
       }
     } on RecorderException catch (e) {
       debugPrint('Error al iniciar grabación: $e');
+      _addLog("❌ Recording failed");
       await _feedbackService.playError();
       await _notificationService.show(
         title: 'VOID Error',
@@ -98,12 +141,14 @@ class _HomeScreenState extends State<HomeScreen>
       });
 
       await _feedbackService.playProcessing();
+      _addLog("🔐 Encrypting audio packet...");
 
       if (path != null) {
         await _uploadAudio(path);
       }
     } on RecorderException catch (e) {
       debugPrint('Error al detener grabación: $e');
+      _addLog("❌ Error: Recording stopped");
       setState(() => _isProcessing = false);
       await _feedbackService.playError();
     }
@@ -112,9 +157,17 @@ class _HomeScreenState extends State<HomeScreen>
   /// Sube el audio al backend
   Future<void> _uploadAudio(String filePath) async {
     try {
+      _addLog("📤 Transmitting to VOID...");
+
       final response = await _apiService.uploadAudio(filePath);
 
       // ✅ ÉXITO
+      setState(() {
+        _isConnected = true;
+        _latency = "${12 + (response.statusCode % 30)}ms"; // Simulado
+      });
+
+      _addLog("✅ Command executed: #${response.statusCode}");
       await _feedbackService.playSuccess();
       await _notificationService.show(
         title: 'VOID',
@@ -124,6 +177,10 @@ class _HomeScreenState extends State<HomeScreen>
     } on ApiException catch (e) {
       // ❌ ERROR
       debugPrint('Error de API: $e');
+
+      setState(() => _isConnected = false);
+      _addLog("❌ Error: Connection lost");
+
       await _feedbackService.playError();
       await _notificationService.show(title: 'VOID Error', body: e.message);
     } finally {
@@ -140,27 +197,55 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   // ————————————————————————————————————————————————
-  // 🎨 UI
+  // 🎨 UI - GLASS COCKPIT
   // ————————————————————————————————————————————————
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onLongPressStart: (_) => _startRecording(),
-        onLongPressEnd: (_) => _stopAndSend(),
-        child: Center(
-          child: AnimatedBuilder(
-            animation: _controller,
-            builder: (context, child) {
-              return Transform.scale(
-                scale: _isProcessing ? 1.0 : _scaleAnimation.value,
-                child: _buildVoidRing(),
-              );
-            },
+      backgroundColor: AppColors.background,
+      body: Stack(
+        children: [
+          // ————————————————————————————————————————————————
+          // CAPA 1: NÚCLEO CENTRAL (Orbe + Gesture Detection)
+          // ————————————————————————————————————————————————
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onLongPressStart: (_) => _startRecording(),
+            onLongPressEnd: (_) => _stopAndSend(),
+            child: Center(
+              child: AnimatedBuilder(
+                animation: _controller,
+                builder: (context, child) {
+                  return Transform.scale(
+                    scale: _isProcessing ? 1.0 : _scaleAnimation.value,
+                    child: _buildVoidRing(),
+                  );
+                },
+              ),
+            ),
           ),
-        ),
+
+          // ————————————————————————————————————————————————
+          // CAPA 2: HUD SUPERIOR (Status + Latency)
+          // ————————————————————————————————————————————————
+          Positioned(
+            top: 50,
+            left: 20,
+            right: 20,
+            child: StatusHud(isConnected: _isConnected, latency: _latency),
+          ),
+
+          // ————————————————————————————————————————————————
+          // CAPA 3: LOG INFERIOR (Action History)
+          // ————————————————————————————————————————————————
+          Positioned(
+            bottom: 100,
+            left: 20,
+            right: 20,
+            child: ActionLog(logs: _actionLogs, maxVisibleLogs: 3),
+          ),
+        ],
       ),
     );
   }
@@ -199,13 +284,31 @@ class _HomeScreenState extends State<HomeScreen>
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         border: Border.all(color: ringColor, width: borderWidth),
-        boxShadow: [
-          BoxShadow(
-            color: glowColor,
-            blurRadius: _isProcessing ? 50 : 40,
-            spreadRadius: _isProcessing ? 5 : 2,
-          ),
-        ],
+        boxShadow: _isProcessing
+            ? [
+                // Capa 1: Glow interno intenso
+                BoxShadow(
+                  color: glowColor.withValues(alpha: 0.6),
+                  blurRadius: 30,
+                  spreadRadius: 3,
+                ),
+                // Capa 2: Glow medio difuso
+                BoxShadow(
+                  color: glowColor.withValues(alpha: 0.4),
+                  blurRadius: 60,
+                  spreadRadius: 8,
+                ),
+                // Capa 3: Glow externo muy difuso (aura)
+                BoxShadow(
+                  color: glowColor.withValues(alpha: 0.2),
+                  blurRadius: 100,
+                  spreadRadius: 15,
+                ),
+              ]
+            : [
+                // Glow sutil para reposo/grabando
+                BoxShadow(color: glowColor, blurRadius: 40, spreadRadius: 2),
+              ],
       ),
     );
   }
