@@ -16,22 +16,29 @@ class AppConfig {
   static const String voiceEndpoint = '/input/voice';
 }
 
-/// 🎨 Paleta de Colores de VOID
+/// 🎨 Paleta de Colores de VOID (Apple Premium Style)
 class AppColors {
   // Prevenir instanciación
   AppColors._();
 
-  /// Color de fondo principal (Deep Void Blue)
-  static const Color background = Color(0xFF050A14);
+  /// Color de fondo principal (Midnight Matte)
+  static const Color background = Color(0xFF0F0F0F);
 
-  /// Color cyan para estados activos y procesamiento
-  static const Color cyan = Color(0xFF00F0FF);
+  /// Color coral para estado de grabación (Listening)
+  static const Color coral = Color(0xFFFF5A5F);
 
-  /// Color rojo para grabación
-  static const Color red = Color(0xFFFF4444);
+  /// Color etéreo para procesamiento (Processing)
+  static const Color ethereal = Color(0xFFE0E0FF);
+
+  /// Color ámbar para errores
+  static const Color amber = Color(0xFFFFB84D);
 
   /// Color blanco para estado de reposo
   static const Color white = Colors.white;
+
+  // Alias para compatibilidad con código existente
+  static const Color cyan = ethereal;
+  static const Color red = coral;
 }
 
 /// ⏱️ Duraciones de Animaciones y Feedback

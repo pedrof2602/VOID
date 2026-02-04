@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants.dart';
 
 /// 📝 Action Log - Lista Efímera de Mensajes
@@ -58,43 +59,23 @@ class ActionLog extends StatelessWidget {
     final color = _calculateColor(index, totalLogs);
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
+      padding: const EdgeInsets.only(bottom: 6),
       child: Opacity(
         opacity: opacity,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Símbolo terminal ">"
-            Text(
-              '>',
-              style: TextStyle(
-                fontFamily: 'Courier',
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-                color: color.withValues(alpha: opacity * 0.8),
-                height: 1.4,
-              ),
+        child: Center(
+          child: Text(
+            message,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.inter(
+              fontSize: 11,
+              fontWeight: FontWeight.w300,
+              color: color,
+              letterSpacing: 0.2,
+              height: 1.5,
             ),
-            const SizedBox(width: 6),
-
-            // Mensaje
-            Flexible(
-              child: Text(
-                message,
-                style: TextStyle(
-                  fontFamily: 'Courier',
-                  fontSize: 10,
-                  fontWeight: FontWeight.w400,
-                  color: color,
-                  letterSpacing: 0.3,
-                  height: 1.4,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
       ),
     );

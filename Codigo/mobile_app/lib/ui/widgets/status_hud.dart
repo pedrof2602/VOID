@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants.dart';
 
 /// 📊 Status HUD - Barra Superior Minimalista
@@ -127,12 +128,11 @@ class _StatusHudState extends State<StatusHud>
         // Texto de estado
         Text(
           statusText,
-          style: TextStyle(
-            fontFamily: 'Courier',
+          style: GoogleFonts.inter(
             fontSize: 11,
             fontWeight: FontWeight.w600,
             color: statusColor.withValues(alpha: 0.9),
-            letterSpacing: 1.2,
+            letterSpacing: 0.5,
           ),
         ),
       ],
@@ -167,12 +167,11 @@ class _StatusHudState extends State<StatusHud>
         // Valor de latencia
         Text(
           widget.latency,
-          style: TextStyle(
-            fontFamily: 'Courier',
+          style: GoogleFonts.inter(
             fontSize: 11,
             fontWeight: FontWeight.w500,
             color: latencyColor.withValues(alpha: 0.8),
-            letterSpacing: 0.5,
+            letterSpacing: 0.3,
           ),
         ),
       ],

@@ -154,20 +154,28 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
-  /// Sube el audio al backend
+  /// Sube el audio al backend con telemetría real
   Future<void> _uploadAudio(String filePath) async {
+    final stopwatch = Stopwatch()..start();
+
     try {
       _addLog("📤 Transmitting to VOID...");
 
       final response = await _apiService.uploadAudio(filePath);
+      stopwatch.stop();
 
-      // ✅ ÉXITO
+      // ✅ ÉXITO - Telemetría real
       setState(() {
         _isConnected = true;
-        _latency = "${12 + (response.statusCode % 30)}ms"; // Simulado
+        _latency = "${stopwatch.elapsedMilliseconds}ms";
       });
 
-      _addLog("✅ Command executed: #${response.statusCode}");
+      // Log con respuesta truncada
+      final truncatedMsg = response.message.length > 30
+          ? '${response.message.substring(0, 30)}...'
+          : response.message;
+      _addLog("✅ VOID: $truncatedMsg");
+
       await _feedbackService.playSuccess();
       await _notificationService.show(
         title: 'VOID',
@@ -175,14 +183,34 @@ class _HomeScreenState extends State<HomeScreen>
         payload: response.message,
       );
     } on ApiException catch (e) {
-      // ❌ ERROR
+      // ❌ ERROR - Desconexión
+      stopwatch.stop();
       debugPrint('Error de API: $e');
 
-      setState(() => _isConnected = false);
-      _addLog("❌ Error: Connection lost");
+      setState(() {
+        _isConnected = false;
+        _latency = "0ms";
+      });
+      _addLog("⚠️ Error: Neural Link Severed");
 
       await _feedbackService.playError();
       await _notificationService.show(title: 'VOID Error', body: e.message);
+    } catch (e) {
+      // ❌ ERROR GENÉRICO
+      stopwatch.stop();
+      debugPrint('Error inesperado: $e');
+
+      setState(() {
+        _isConnected = false;
+        _latency = "0ms";
+      });
+      _addLog("⚠️ Error: Connection timeout");
+
+      await _feedbackService.playError();
+      await _notificationService.show(
+        title: 'VOID Error',
+        body: 'Error de conexión',
+      );
     } finally {
       setState(() => _isProcessing = false);
     }
@@ -250,65 +278,59 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  /// Construye el anillo visual de VOID
+  /// Construye el anillo visual de VOID (Liquid Soul Style)
   Widget _buildVoidRing() {
-    // Determinar colores según el estado
+    // Determinar colores según el estado (LÓGICA INTACTA)
     Color ringColor;
     Color glowColor;
     double size;
-    double borderWidth;
 
     if (_isRecording) {
       // 🔴 GRABANDO
       ringColor = AppColors.red.withValues(alpha: 0.8);
       glowColor = AppColors.red.withValues(alpha: 0.3);
       size = 140;
-      borderWidth = 2;
     } else if (_isProcessing) {
       // 🔵 PROCESANDO (mismo tamaño, efecto neón cyan)
       ringColor = AppColors.cyan.withValues(alpha: 0.8);
       glowColor = AppColors.cyan.withValues(alpha: 0.3);
       size = 140;
-      borderWidth = 2;
     } else {
       // ⚪ REPOSO
       ringColor = AppColors.white.withValues(alpha: 0.05);
       glowColor = AppColors.cyan.withValues(alpha: 0.05);
       size = 140;
-      borderWidth = 2;
     }
 
+    // VISUAL UPDATE: Liquid Soul (sin borde duro)
     return Container(
       width: size,
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        border: Border.all(color: ringColor, width: borderWidth),
-        boxShadow: _isProcessing
-            ? [
-                // Capa 1: Glow interno intenso
-                BoxShadow(
-                  color: glowColor.withValues(alpha: 0.6),
-                  blurRadius: 30,
-                  spreadRadius: 3,
-                ),
-                // Capa 2: Glow medio difuso
-                BoxShadow(
-                  color: glowColor.withValues(alpha: 0.4),
-                  blurRadius: 60,
-                  spreadRadius: 8,
-                ),
-                // Capa 3: Glow externo muy difuso (aura)
-                BoxShadow(
-                  color: glowColor.withValues(alpha: 0.2),
-                  blurRadius: 100,
-                  spreadRadius: 15,
-                ),
-              ]
-            : [
-                // Glow sutil para reposo/grabando
-                BoxShadow(color: glowColor, blurRadius: 40, spreadRadius: 2),
-              ],
+        // Sin borde sólido - solo luz difusa
+        color: ringColor.withValues(alpha: 0.1),
+        boxShadow: [
+          // Núcleo brillante
+          BoxShadow(
+            color: glowColor.withValues(alpha: 0.8),
+            blurRadius: 20,
+            spreadRadius: 2,
+          ),
+          // Glow medio
+          BoxShadow(
+            color: glowColor.withValues(alpha: 0.4),
+            blurRadius: 60,
+            spreadRadius: 10,
+          ),
+          // Aura difusa externa
+          if (_isRecording || _isProcessing)
+            BoxShadow(
+              color: glowColor.withValues(alpha: 0.2),
+              blurRadius: 100,
+              spreadRadius: 20,
+            ),
+        ],
       ),
     );
   }

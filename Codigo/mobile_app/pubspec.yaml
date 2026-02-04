@@ -65,6 +65,9 @@ dependencies:
   # Local notifications
   flutter_local_notifications: ^20.0.0
 
+  # Google Fonts for Inter typography
+  google_fonts: ^6.1.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
