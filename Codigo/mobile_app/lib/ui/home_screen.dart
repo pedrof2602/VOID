@@ -5,6 +5,7 @@ import '../services/api_service.dart';
 import '../services/feedback_service.dart';
 import '../services/notification_service.dart';
 import '../services/recorder_service.dart';
+import '../services/headset_service.dart';
 import 'widgets/status_hud.dart';
 import 'widgets/action_log.dart';
 
@@ -40,6 +41,9 @@ class _HomeScreenState extends State<HomeScreen>
   bool _isRecording = false;
   bool _isProcessing = false;
 
+  // Suscripción a eventos de botones de auriculares
+  StreamSubscription<void>? _headsetButtonSubscription;
+
   // Estado de HUD
   //todo: implementar HUD dinamico segun conexion
   final List<String> _actionLogs = [];
@@ -51,6 +55,7 @@ class _HomeScreenState extends State<HomeScreen>
     super.initState();
     _setupAnimation();
     _initializeServices();
+    _setupHeadsetListener();
   }
 
   /// Configura la animación de respiración del anillo
@@ -74,6 +79,34 @@ class _HomeScreenState extends State<HomeScreen>
 
     // Log inicial
     _addLog("System initialized");
+  }
+
+  /// Configura el listener para botones de auriculares
+  void _setupHeadsetListener() {
+    _headsetButtonSubscription = HeadsetService().onButtonPress.listen(
+      (_) => _handleHeadsetButton(),
+    );
+  }
+
+  /// Maneja eventos de botones físicos de auriculares
+  ///
+  /// Llama a los métodos existentes sin modificar su lógica interna
+  void _handleHeadsetButton() {
+    // Ignorar si ya está procesando
+    if (_isProcessing) {
+      debugPrint('🎧 Botón ignorado: ya procesando');
+      return;
+    }
+
+    if (_isRecording) {
+      // Detener grabación
+      debugPrint('🎧 Deteniendo grabación desde auriculares');
+      _stopAndSend();
+    } else {
+      // Iniciar grabación
+      debugPrint('🎧 Iniciando grabación desde auriculares');
+      _startRecording();
+    }
   }
 
   // ————————————————————————————————————————————————
@@ -218,6 +251,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   @override
   void dispose() {
+    _headsetButtonSubscription?.cancel();
     _controller.dispose();
     _feedbackService.dispose();
     _recorderService.dispose();
