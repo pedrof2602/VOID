@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'core/constants.dart';
 import 'services/notification_service.dart';
+import 'services/ghost_service.dart';
 import 'ui/home_screen.dart';
 
 /// 🚀 Punto de Entrada de la Aplicación VOID
@@ -10,6 +11,9 @@ void main() async {
 
   // Inicializar servicio de notificaciones
   await NotificationService().initialize();
+
+  // 👻 Inicializar Ghost Mode (Persistencia en segundo plano)
+  await GhostService().initialize();
 
   // Ejecutar aplicación
   runApp(const VoidApp());
