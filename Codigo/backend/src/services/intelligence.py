@@ -19,6 +19,8 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 class IntelligenceService:
+    FALLBACK_MODEL = "gemini-1.5-flash"  # Fallback cuando se agota quota
+    
     def __init__(self):
         # Initialize new google-genai client
         self.client = genai.Client(api_key=Config.GOOGLE_API_KEY)
@@ -39,8 +41,31 @@ class IntelligenceService:
                 else:
                     logging.warning(f"⚠️ Cerebro DSPy no encontrado en {brain_path}")
             except Exception as e:
-                logging.error(f"Error cargando DSPy: {e}")
+                logger.error(f"Error cargando DSPy: {e}")
                 self.dspy_analyzer = None
+    
+    async def _generate_with_fallback(self, model: str, contents: str, config=None):
+        """Helper para generar contenido con fallback automático si se agota quota."""
+        try:
+            return await self.client.aio.models.generate_content(
+                model=model,
+                contents=contents,
+                config=config
+            )
+        except Exception as e:
+            error_msg = str(e)
+            # Detectar error 429 RESOURCE_EXHAUSTED
+            if "429" in error_msg or "RESOURCE_EXHAUSTED" in error_msg:
+                logger.warning(f"⚠️ Quota agotada para {model}, usando fallback: {self.FALLBACK_MODEL}")
+                # Reintentar con modelo fallback
+                return await self.client.aio.models.generate_content(
+                    model=self.FALLBACK_MODEL,
+                    contents=contents,
+                    config=config
+                )
+            else:
+                # Si no es error de quota, re-lanzar la excepción
+                raise
 
     async def analyze_input(self, text: str) -> 'UnifiedOutput':
         """
@@ -124,7 +149,7 @@ Responde SOLO con JSON válido (sin markdown):
 }}
 """
         try:
-            response = await self.client.aio.models.generate_content(
+            response = await self._generate_with_fallback(
                 model=self.model_name,
                 contents=prompt,
                 config=types.GenerateContentConfig(response_mime_type="application/json")
@@ -189,7 +214,7 @@ Responde SOLO con JSON válido (sin markdown):
         """
         try:
             # Llamada asíncrona para no bloquear
-            response = await self.client.aio.models.generate_content(
+            response = await self._generate_with_fallback(
                 model=self.model_name,
                 contents=prompt
             )
@@ -216,7 +241,7 @@ Responde SOLO con JSON válido (sin markdown):
         - "La capital de Francia es París" -> MEMORY
         """
         try:
-            response = await self.client.aio.models.generate_content(
+            response = await self._generate_with_fallback(
                 model=self.model_name,
                 contents=prompt
             )
@@ -241,7 +266,7 @@ Responde SOLO con JSON válido (sin markdown):
         }}
         """
         try:
-            response = await self.client.aio.models.generate_content(
+            response = await self._generate_with_fallback(
                 model=self.model_name,
                 contents=prompt,
                 config=types.GenerateContentConfig(response_mime_type="application/json")
@@ -288,7 +313,7 @@ Responde SOLO con JSON válido (sin markdown):
         - "Agregar tarea en Notion" -> TODO
         """
         try:
-            response = await self.client.aio.models.generate_content(
+            response = await self._generate_with_fallback(
                 model=self.model_name,
                 contents=prompt,
                 config=types.GenerateContentConfig(response_mime_type="application/json")
