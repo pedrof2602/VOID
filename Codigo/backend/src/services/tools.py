@@ -66,7 +66,12 @@ class ToolRegistry:
         # Si no hay credenciales válidas, autenticar
         if not creds or not creds.valid:
             if creds and creds.expired and creds.refresh_token:
-                creds.refresh(Request())
+                try:
+                    creds.refresh(Request())
+                except Exception as e:
+                    logger.warning(f"⚠️ No se pudo refrescar el token de Google Calendar: {e}")
+                    logger.warning("⚠️ Google Calendar deshabilitado - regenera el token localmente")
+                    return None
             elif credentials_path.exists():
                 flow = InstalledAppFlow.from_client_secrets_file(
                     str(credentials_path), SCOPES

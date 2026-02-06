@@ -2,7 +2,8 @@ import json
 import logging
 import asyncio
 import os
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from typing import Optional
 from src.config import Config
 from src.schemas import IntelligenceOutput, MemoryCategory
@@ -19,15 +20,9 @@ logger = logging.getLogger(__name__)
 
 class IntelligenceService:
     def __init__(self):
-        genai.configure(api_key=Config.GOOGLE_API_KEY)
+        # Initialize new google-genai client
+        self.client = genai.Client(api_key=Config.GOOGLE_API_KEY)
         self.model_name = Config.LLM_MODEL_NAME
-        
-        # Configuración optimizada
-        self.flash_model = genai.GenerativeModel(self.model_name)
-        self.json_model = genai.GenerativeModel(
-            self.model_name,
-            generation_config={"response_mime_type": "application/json"}
-        )
         
         # 🧠 DSPy: Cargar cerebro compilado si está disponible
         self.dspy_analyzer = None
@@ -129,7 +124,11 @@ Responde SOLO con JSON válido (sin markdown):
 }}
 """
         try:
-            response = await self.json_model.generate_content_async(prompt)
+            response = await self.client.aio.models.generate_content(
+                model=self.model_name,
+                contents=prompt,
+                config=types.GenerateContentConfig(response_mime_type="application/json")
+            )
             data = json.loads(response.text)
             return UnifiedOutput(**data)
         except Exception as e:
@@ -190,7 +189,10 @@ Responde SOLO con JSON válido (sin markdown):
         """
         try:
             # Llamada asíncrona para no bloquear
-            response = await self.flash_model.generate_content_async(prompt)
+            response = await self.client.aio.models.generate_content(
+                model=self.model_name,
+                contents=prompt
+            )
             cleaned = response.text.strip()
             return None if "NULL" in cleaned or not cleaned else cleaned
         except Exception as e:
@@ -214,7 +216,10 @@ Responde SOLO con JSON válido (sin markdown):
         - "La capital de Francia es París" -> MEMORY
         """
         try:
-            response = await self.flash_model.generate_content_async(prompt)
+            response = await self.client.aio.models.generate_content(
+                model=self.model_name,
+                contents=prompt
+            )
             intent = response.text.strip().upper()
             return "ACTION" if "ACTION" in intent else "MEMORY"
         except Exception as e:
@@ -236,7 +241,11 @@ Responde SOLO con JSON válido (sin markdown):
         }}
         """
         try:
-            response = await self.json_model.generate_content_async(prompt)
+            response = await self.client.aio.models.generate_content(
+                model=self.model_name,
+                contents=prompt,
+                config=types.GenerateContentConfig(response_mime_type="application/json")
+            )
             data = json.loads(response.text)
             # Validación automática con Pydantic
             return IntelligenceOutput(**data)
@@ -279,7 +288,11 @@ Responde SOLO con JSON válido (sin markdown):
         - "Agregar tarea en Notion" -> TODO
         """
         try:
-            response = await self.json_model.generate_content_async(prompt)
+            response = await self.client.aio.models.generate_content(
+                model=self.model_name,
+                contents=prompt,
+                config=types.GenerateContentConfig(response_mime_type="application/json")
+            )
             data = json.loads(response.text)
             return ActionOutput(**data)
         except Exception as e:
@@ -289,14 +302,17 @@ Responde SOLO con JSON válido (sin markdown):
     async def generate_embedding(self, text: str) -> list[float]:
         """Genera embeddings de forma verdaderamente asíncrona."""
         try:
-            # Ejecutar en thread separado para no bloquear el event loop
-            result = await asyncio.to_thread(
-                genai.embed_content,
+            # Usar el nuevo SDK con async nativo
+            # FIX: Forzar 768 dimensiones para compatibilidad con Supabase
+            response = await self.client.aio.models.embed_content(
                 model=Config.EMBEDDING_MODEL_NAME,
-                content=text,
-                task_type="retrieval_document"
+                contents=text,
+                config=types.EmbedContentConfig(
+                    output_dimensionality=768  # Matryoshka embedding truncation
+                )
             )
-            return result['embedding']
+            # Acceder al vector usando la nueva API
+            return response.embeddings[0].values
         except Exception as e:
             logger.error(f"Error vectorizando: {e}")
             return []

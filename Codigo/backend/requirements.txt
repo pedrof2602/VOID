@@ -3,7 +3,7 @@ python-dotenv
 sounddevice
 scipy
 numpy
-google-generativeai
+google-genai
 deepgram-sdk
 fastapi
 uvicorn[standard]
