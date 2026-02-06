@@ -19,7 +19,7 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 class IntelligenceService:
-    FALLBACK_MODEL = "gemini-1.5-flash"  # Fallback cuando se agota quota
+    FALLBACK_MODEL = "gemini-2.5-flash"  # Fallback cuando se agota quota (250 RPD gratis)
     
     def __init__(self):
         # Initialize new google-genai client
@@ -109,7 +109,9 @@ Tareas:
 8. Reescribe el texto limpio en 3ra persona de forma técnica
 
 🔧 HERRAMIENTAS DISPONIBLES:
-Si necesitas AGENDAR un evento en Google Calendar, usa la herramienta "calendar_add":
+**IMPORTANTE: Si category es CALENDAR, SIEMPRE debes incluir tool_name y tool_args.**
+
+Para AGENDAR eventos en Google Calendar, usa la herramienta "calendar_add":
 - Calcula la fecha ISO 8601 exacta (YYYY-MM-DDTHH:MM:SS)
 - Ejemplo: "mañana a las 3pm" → "{tomorrow_date}T15:00:00"
 - Ejemplo: "pasado mañana 10am" → "{day_after_tomorrow}T10:00:00"
@@ -131,6 +133,10 @@ Ejemplos:
 - "Pedro me comentó que le gusta el café"
   → type: MEMORY, category: FACT, refined_text: "A Pedro le gusta el café", tool_name: null
 
+**REGLA CRÍTICA:**
+- Si category == "CALENDAR" → tool_name DEBE SER "calendar_add" (NO null)
+- Si category != "CALENDAR" → tool_name DEBE SER null
+
 Responde SOLO con JSON válido (sin markdown):
 {{
   "type": "ACTION" | "MEMORY",
@@ -144,8 +150,8 @@ Responde SOLO con JSON válido (sin markdown):
   "entities": {{"person": "nombre", "place": "lugar"}},
   "tags": ["tag1", "tag2"],
   "confidence": 0.0-1.0,
-  "tool_name": "calendar_add" (solo si es CALENDAR y necesitas agendar) | null,
-  "tool_args": {{"summary": "...", "start_iso": "YYYY-MM-DDTHH:MM:SS", "duration_minutes": 60, "location": "..."}} (solo si tool_name no es null) | null
+  "tool_name": "calendar_add" (OBLIGATORIO si category es CALENDAR) | null (si NO es CALENDAR),
+  "tool_args": {{"summary": "...", "start_iso": "YYYY-MM-DDTHH:MM:SS", "duration_minutes": 60, "location": "..."}} (OBLIGATORIO si tool_name no es null) | null
 }}
 """
         try:
