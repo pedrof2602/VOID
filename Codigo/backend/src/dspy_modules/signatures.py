@@ -29,8 +29,27 @@ class UnifiedAnalysis(dspy.Signature):
     confidence = dspy.OutputField(desc="Confianza de la clasificación (0.0-1.0)")
     
     # 🆕 Outputs para Herramientas (Autonomous Tool Execution)
-    tool_name = dspy.OutputField(desc="SIEMPRE que la category sea 'CALENDAR', este campo DEBE SER 'calendar_add'. Si no, None.")
-    tool_args = dspy.OutputField(desc="Diccionario con los argumentos exactos para la herramienta (ej: {'summary': 'Dentista', 'start_iso': '2026-01-30T17:00:00'}).")
+    tool_name = dspy.OutputField(
+        desc=(
+            "Herramienta a ejecutar. Valores válidos:\n"
+            "  - 'calendar_add': OBLIGATORIO cuando category == 'CALENDAR'.\n"
+            "  - 'send_email': cuando el usuario pide enviar un correo electrónico.\n"
+            "  - None: en cualquier otro caso."
+        )
+    )
+    tool_args = dspy.OutputField(
+        desc=(
+            "Diccionario JSON con los argumentos exactos para la herramienta seleccionada.\n"
+            "  • Para 'calendar_add': {'summary': str, 'start_iso': 'YYYY-MM-DDTHH:MM:SS', "
+            "'duration_minutes': int, 'location': str}.\n"
+            "  • Para 'send_email':   {'to': 'correo_destino', 'subject': 'asunto_formal', "
+            "'body': 'cuerpo_completo'}.  "
+            "REGLA ESTRICTA: redacta 'subject' y 'body' de forma profesional y autónoma "
+            "basándote en la intención del usuario. NO esperes que el usuario dicte el texto "
+            "palabra por palabra — eres tú quien debe escribir el correo.\n"
+            "  • None si tool_name es None."
+        )
+    )
 
 
 class MemoryRefinement(dspy.Signature):

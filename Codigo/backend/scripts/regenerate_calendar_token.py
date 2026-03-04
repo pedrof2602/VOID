@@ -10,7 +10,10 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 
 # Scopes para Google Calendar
-SCOPES = ['https://www.googleapis.com/auth/calendar']
+SCOPES = [
+    'https://www.googleapis.com/auth/calendar',
+    'https://www.googleapis.com/auth/gmail.send'
+    ]
 
 def regenerate_token():
     """Regenera el token de Google Calendar."""

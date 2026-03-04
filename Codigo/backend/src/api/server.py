@@ -124,8 +124,8 @@ async def _run_tool_background(tool_name: str, tool_args: dict, recording_id: st
         logger.info(f"🔧 [Background] Executing tool: {tool_name}")
         logger.info(f"📦 [Background] Tool args: {tool_args}")
         
-        # Ejecutar herramienta en thread pool (no bloquea Event Loop)
-        tool_result = await asyncio.to_thread(tools.execute, tool_name, tool_args)
+        # Ejecutar herramienta (execute() es async y maneja el threading internamente)
+        tool_result = await tools.execute(tool_name, tool_args)
         
         logger.info(f"✅ [Background] Tool executed successfully: {tool_result}")
         

@@ -58,11 +58,24 @@ HERRAMIENTAS DISPONIBLES:
   - start_iso: Fecha/hora ISO 8601
   - duration_minutes: int (default 60)
 
-⚡ REGLA OBLIGATORIA DE EJECUCIÓN:
+- send_email(to, subject, body): Usa esto para enviar correos electrónicos.
+  Argumentos requeridos:
+  - to: dirección de correo del destinatario
+  - subject: asunto formal y descriptivo
+  - body: cuerpo completo del correo, redactado de forma profesional y autónoma
+           en primera persona, basándote en la intención del usuario.
+           NO esperes que el usuario dicte el texto; redáctalo tú mismo.
+
+⚡ REGLAS OBLIGATORIAS DE EJECUCIÓN:
 Si detectas que la intención es agendar una reunión o evento:
 1. Asigna 'ACTION' al campo type.
 2. Asigna 'CALENDAR' al campo category.
 3. TU DEBES ASIGNAR 'calendar_add' al campo tool_name. (No lo dejes vacío).
+
+Si detectas que la intención es enviar un correo electrónico:
+1. Asigna 'ACTION' al campo type.
+2. Asigna 'TODO' al campo category.
+3. TU DEBES ASIGNAR 'send_email' al campo tool_name con to, subject y body.
 """
         
         return self.analyze(raw_text=raw_text, context=context_str)

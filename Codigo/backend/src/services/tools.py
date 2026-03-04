@@ -7,6 +7,7 @@ Python es un ejecutor ciego que solo obedece.
 
 Author: VOID Intelligence Team
 """
+import asyncio
 import os
 import logging
 from typing import Dict, Any, Optional
@@ -19,6 +20,9 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 import pickle
+
+# Gmail service
+from src.services.gmail_service import GmailService
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +44,7 @@ class ToolRegistry:
     def __init__(self):
         """Inicializa el registro y autentica servicios"""
         self.google_calendar = self._init_google_calendar()
+        self.gmail = GmailService()
         logger.info("✅ ToolRegistry initialized")
     
     def _init_google_calendar(self):
@@ -200,40 +205,71 @@ class ToolRegistry:
             }
     
     # ==========================================
-    # DESPACHADOR GENÉRICO
+    # HERRAMIENTAS ASÍNCRONAS
+    # ==========================================
+
+    async def send_email(
+        self,
+        to: str,
+        subject: str,
+        body: str,
+    ) -> Dict[str, Any]:
+        """
+        Envía un correo electrónico usando la API de Gmail.
+
+        Args:
+            to:      Dirección de correo del destinatario.
+            subject: Asunto del correo.
+            body:    Cuerpo del mensaje.
+
+        Returns:
+            Dict con 'status': 'sent' | 'error' y metadatos.
+        """
+        return await self.gmail.send_email(
+            to_email=to,
+            subject=subject,
+            body=body,
+        )
+
+    # ==========================================
+    # DESPACHADOR GENÉRICO (ASYNC)
     # ==========================================
     
-    def execute(self, tool_name: str, args: Dict[str, Any]) -> Any:
+    async def execute(self, tool_name: str, args: Dict[str, Any]) -> Any:
         """
-        Despachador genérico de herramientas.
+        Despachador genérico de herramientas (async).
         
-        El modelo solicita una herramienta, Python la ejecuta ciegamente.
-        
+        Herramientas síncronas (e.g. calendar_add) se ejecutan dentro de
+        asyncio.to_thread() para no bloquear el Event Loop.
+        Herramientas asíncronas (e.g. send_email) se awaitan directamente.
+
         Args:
-            tool_name: Nombre de la herramienta (e.g., "calendar_add")
+            tool_name: Nombre de la herramienta (e.g., "calendar_add", "send_email")
             args: Argumentos para la herramienta
-        
+
         Returns:
             Resultado de la ejecución de la herramienta
-        
+
         Raises:
             ValueError: Si la herramienta no existe
         """
-        # Mapeo de nombres a funciones
-        tools = {
+        # Herramientas síncronas (ejecutadas en thread pool)
+        sync_tools = {
             'calendar_add': self.calendar_add,
-            # Futuras herramientas:
-            # 'notion_create': self.notion_create,
-            # 'reminder_set': self.reminder_set,
-            # 'email_send': self.email_send,
         }
-        
-        if tool_name not in tools:
-            raise ValueError(f"Herramienta desconocida: {tool_name}")
-        
-        # Ejecutar herramienta
-        tool_func = tools[tool_name]
-        return tool_func(**args)
+
+        # Herramientas asíncronas (awaited directamente)
+        async_tools = {
+            'send_email': self.send_email,
+        }
+
+        if tool_name in sync_tools:
+            return await asyncio.to_thread(sync_tools[tool_name], **args)
+
+        if tool_name in async_tools:
+            return await async_tools[tool_name](**args)
+
+        raise ValueError(f"Herramienta desconocida: '{tool_name}'")
     
     def get_available_tools(self) -> Dict[str, str]:
         """
@@ -243,6 +279,5 @@ class ToolRegistry:
         """
         return {
             'calendar_add': 'Agregar evento a Google Calendar con fecha ISO exacta',
-            # 'notion_create': 'Crear página en Notion',
-            # 'reminder_set': 'Configurar recordatorio',
+            'send_email': 'Enviar correo electrónico vía Gmail API (OAuth2)',
         }

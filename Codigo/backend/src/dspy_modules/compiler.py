@@ -89,6 +89,38 @@ def compile_void():
             reminder_minutes="0",
             confidence="0.10" # Baja confianza porque no hay contenido real
         ).with_inputs('raw_text'),
+
+        # --- CASO 11: ENVÍO DE CORREO — CANCELACIÓN DE REUNIÓN ---
+        dspy.Example(
+            raw_text="Mándale un correo a juan@empresa.com cancelando la reunión de hoy por un imprevisto.",
+            type="ACTION",
+            category="TODO",
+            refined_text="El usuario solicita enviar un correo a juan@empresa.com cancelando la reunión de hoy por un imprevisto.",
+            title="",
+            date="hoy",
+            time="",
+            location="",
+            reminder_minutes="0",
+            confidence="0.95",
+            tool_name="send_email",
+            tool_args='{"to": "juan@empresa.com", "subject": "Cancelación de reunión de hoy", "body": "Estimado Juan,\\n\\nLe escribo para informarle que, lamentablemente, debo cancelar la reunión programada para el día de hoy debido a un imprevisto de último momento.\\n\\nQuedo a disposición para coordinar una nueva fecha a la brevedad.\\n\\nSaludos cordiales."}'
+        ).with_inputs('raw_text'),
+
+        # --- CASO 12: ENVÍO DE CORREO — CONFIRMACIÓN DE DOCUMENTOS ---
+        dspy.Example(
+            raw_text="Mail a rrhh@startup.com diciendo que mañana envío los documentos.",
+            type="ACTION",
+            category="TODO",
+            refined_text="El usuario solicita enviar un correo a rrhh@startup.com informando que los documentos serán enviados mañana.",
+            title="",
+            date="mañana",
+            time="",
+            location="",
+            reminder_minutes="0",
+            confidence="0.97",
+            tool_name="send_email",
+            tool_args='{"to": "rrhh@startup.com", "subject": "Envío de documentos", "body": "Estimado equipo de RRHH,\\n\\nLes escribo para informarles que les haré llegar los documentos solicitados mañana a primera hora.\\n\\nQuedo a disposición ante cualquier consulta.\\n\\nSaludos cordiales."}'
+        ).with_inputs('raw_text'),
     ]
 
     # 3. EL MAESTRO (Teleprompter)
