@@ -15,7 +15,7 @@ SCOPES = [
     'https://www.googleapis.com/auth/gmail.send'
     ]
 
-def regenerate_token(): 
+def regenerate_token():
     """Regenera el token de Google Calendar."""
     # Rutas
     token_path = Path(__file__).parent.parent / 'src' / 'services' / 'token.pickle'
